@@ -1,5 +1,5 @@
 import numpy as np
-
+from matplotlib import pyplot
 
 def main():
     image_set_count = 3
@@ -19,6 +19,8 @@ def main():
             images[image_index][i // image_x_size \
                 ][i % image_y_size] = \
                 int(bit_string[i])
+        pyplot.imshow(images[image_index])
+        pyplot.show()
 
     for image_set_index in range(image_set_count):
         solutions = (np.random.rand(
