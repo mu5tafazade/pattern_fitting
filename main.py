@@ -19,10 +19,10 @@ def main():
             images[image_index][i // image_x_size \
                 ][i % image_y_size] = \
                 int(bit_string[i])
-        pyplot.imshow(images[image_index])
-        pyplot.show()
 
     for image_set_index in range(image_set_count):
+        print(f"Image set: {image_set_index}")
+
         solutions = (np.random.rand(
             solution_count, 7, 3, 3) > 0.5).astype(int)
 
@@ -39,6 +39,8 @@ def main():
                     current_image_index = \
                         image_count * image_set_index + \
                         image_index
+                    current_image = \
+                        images[current_image_index]
 
 if __name__ == "__main__":
     main()
