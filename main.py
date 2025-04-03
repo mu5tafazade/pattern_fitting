@@ -143,14 +143,14 @@ class Fitter:
 
             solutions = new_solutions[:population_size]  # Yeni nesil
 
-            # Grafik: Loss değerlerinin düşüşü
-            pyplot.plot(best_losses, label='Best Loss')
-            pyplot.xlabel("Iteration")
-            pyplot.ylabel("Loss")
-            pyplot.title(f"Image Set {image_set_index} - Best Loss Over Time")
-            pyplot.legend()
-            pyplot.grid(True)
-            pyplot.show()
+        # Grafik: Loss değerlerinin düşüşü
+        pyplot.plot(best_losses, label='Best Loss')
+        pyplot.xlabel("Iteration")
+        pyplot.ylabel("Loss")
+        pyplot.title(f"Image Set {image_set_index} - Best Loss Over Time")
+        pyplot.legend()
+        pyplot.grid(True)
+        pyplot.show()
 
     def run(self):
         images = self.load_images()
