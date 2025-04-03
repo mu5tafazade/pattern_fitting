@@ -11,11 +11,10 @@ class Fitter:
     PATTERN_COUNT = 7
     PATTERN_X_SIZE = 3
     PATTERN_Y_SIZE = 3
-    ITERATION_COUNT = 100
+    ITERATION_COUNT = 15
 
     def __init__(self):
         pass
-
 
     def load_images(self):
         images = np.zeros((Fitter.IMAGE_SET_COUNT * Fitter.IMAGE_COUNT,
@@ -37,27 +36,22 @@ class Fitter:
                                    current_image,
                                    x_index,
                                    y_index):
-        current_chunk = np.zeros((Fitter.PATTERN_X_SIZE,
-                                  Fitter.PATTERN_Y_SIZE))
+        block = current_image[x_index:x_index + Fitter.PATTERN_X_SIZE,
+                              y_index:y_index + Fitter.PATTERN_Y_SIZE]
 
-        for i in range(PATTERN_X_SIZE):
-            for j in range(PATTERN_Y_SIZE):
-                current_chunk[i][j] = current_image[
-                    x_index + i][y_index + j]
-        
-        maximum_similarity = -1
-        closest_pattern = -1
-        for (i, pattern) in enumerate(solution):
-            similarity = compare_patterns(pattern, current_chunk)
-            if similarity > maximum_similarity:
-                maximum_similarity = similarity
-                closest_pattern = i
+        min_diff = float('inf')
+        best_pattern = None
 
-        for i in range(PATTERN_X_SIZE):
-            for j in range(PATTERN_Y_SIZE):
-                approximate_image[x_index + i][y_index + j] = //
+        for pattern_index in range(Fitter.PATTERN_COUNT):
+            pattern = solution[pattern_index]
+            diff = np.sum(np.abs(block - pattern))
+            if diff < min_diff:
+                min_diff = diff
+                best_pattern = pattern
 
-    
+        approximate_image[x_index:x_index + Fitter.PATTERN_X_SIZE,
+                          y_index:y_index + Fitter.PATTERN_Y_SIZE] = best_pattern
+
     def construct_approximate_image(self, image_set_index,
                                     images, solution,
                                     image_index): 
@@ -66,8 +60,7 @@ class Fitter:
         current_image_index = \
             Fitter.IMAGE_COUNT * image_set_index + \
             image_index
-        current_image = \
-            images[current_image_index]
+        current_image = images[current_image_index]
 
         for x_index in range(
             0, Fitter.IMAGE_X_SIZE, Fitter.PATTERN_X_SIZE):
@@ -81,21 +74,17 @@ class Fitter:
 
         return approximate_image
 
-
-    def compute_loss(self, image_set_index, images,
-                     solution):
+    def compute_loss(self, image_set_index, images, solution):
         loss = 0
-
         for image_index in range(Fitter.IMAGE_COUNT):
-            approximate_image = \
-                self.construct_approximate_image(
-                    image_set_index, images,
-                    solution, image_index
-                )
-        
+            approximate_image = self.construct_approximate_image(
+                image_set_index, images, solution, image_index
+            )
+            original_image = images[Fitter.IMAGE_COUNT * image_set_index + image_index]
+            loss += np.sum(np.abs(approximate_image - original_image))
+
         return loss
 
-        
     def compute_losses(self, image_set_index,
                        images, solutions):
         losses = np.zeros((Fitter.SOLUTION_COUNT,))
@@ -107,18 +96,61 @@ class Fitter:
 
         return losses
 
-
     def fit_to_image_set(self, image_set_index, images):
         print(f"Image set: {image_set_index}")
 
+        population_size = Fitter.SOLUTION_COUNT
+        elite_count = 50
+        mutation_rate = 0.01  # %1 ihtimalle bit flip
+
+        # Başlangıç popülasyonu
         solutions = (np.random.rand(
-            Fitter.SOLUTION_COUNT, Fitter.PATTERN_COUNT,
-            Fitter.PATTERN_X_SIZE, Fitter.PATTERN_Y_SIZE) > 0.5
-            ).astype(int)
+            population_size, Fitter.PATTERN_COUNT,
+            Fitter.PATTERN_X_SIZE, Fitter.PATTERN_Y_SIZE) > 0.5).astype(int)
+
+        best_losses = []
 
         for current_iteration in range(Fitter.ITERATION_COUNT):
             losses = self.compute_losses(image_set_index, images, solutions)
+            sorted_indices = np.argsort(losses)
+            solutions = solutions[sorted_indices]  # En iyi çözümler başta
 
+            best_loss = losses[sorted_indices[0]]
+            avg_loss = np.mean(losses)
+            best_losses.append(best_loss)
+
+            print(f"Iteration {current_iteration + 1}, Best loss: {best_loss}, Avg loss: {avg_loss:.2f}")
+
+            # Elitleri koru
+            new_solutions = solutions[:elite_count].copy()
+
+            # Yeni bireyler üret
+            while len(new_solutions) < population_size:
+                # Rastgele iki elit seç
+                parents = solutions[np.random.choice(elite_count, size=2, replace=False)]
+                # Çaprazla (tek nokta)
+                crossover_point = np.random.randint(1, Fitter.PATTERN_COUNT)
+                child = np.concatenate([
+                    parents[0][:crossover_point],
+                    parents[1][crossover_point:]
+                ], axis=0)
+
+                # Mutasyon uygula
+                mutation_mask = (np.random.rand(*child.shape) < mutation_rate).astype(int)
+                child = np.bitwise_xor(child, mutation_mask)
+
+                new_solutions = np.concatenate([new_solutions, [child]], axis=0)
+
+            solutions = new_solutions[:population_size]  # Yeni nesil
+
+            # Grafik: Loss değerlerinin düşüşü
+            pyplot.plot(best_losses, label='Best Loss')
+            pyplot.xlabel("Iteration")
+            pyplot.ylabel("Loss")
+            pyplot.title(f"Image Set {image_set_index} - Best Loss Over Time")
+            pyplot.legend()
+            pyplot.grid(True)
+            pyplot.show()
 
     def run(self):
         images = self.load_images()
@@ -128,7 +160,6 @@ class Fitter:
 
 def main():
     Fitter().run()
-
 
 if __name__ == "__main__":
     main()
