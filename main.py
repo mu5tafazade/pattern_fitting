@@ -36,11 +36,19 @@ class Fitter:
                                    current_image,
                                    x_index,
                                    y_index):
+        # Take 3x3 block to fill with the most similar pattern
         block = current_image[x_index:x_index + Fitter.PATTERN_X_SIZE,
                               y_index:y_index + Fitter.PATTERN_Y_SIZE]
 
+        # Find the pattern with the minimum difference
+
+        # Minimum difference
         min_diff = float('inf')
+
+        # Pattern with the minimum difference
         best_pattern = None
+
+        # TODO: add comments
 
         for pattern_index in range(Fitter.PATTERN_COUNT):
             pattern = solution[pattern_index]
@@ -100,20 +108,27 @@ class Fitter:
         print(f"Image set: {image_set_index}")
 
         population_size = Fitter.SOLUTION_COUNT
-        elite_count = 50
-        mutation_rate = 0.01  # %1 ihtimalle bit flip
 
-        # Başlangıç popülasyonu
+        # Number of best solutions
+        elite_count = 50
+
+        # Bit flip with 1% probability
+        mutation_rate = 0.01
+
+        # Initial population
         solutions = (np.random.rand(
             population_size, Fitter.PATTERN_COUNT,
             Fitter.PATTERN_X_SIZE, Fitter.PATTERN_Y_SIZE) > 0.5).astype(int)
 
+        # Track best losses for plotting
         best_losses = []
 
         for current_iteration in range(Fitter.ITERATION_COUNT):
             losses = self.compute_losses(image_set_index, images, solutions)
+
+            # Sort solutions with losses in ascending order
             sorted_indices = np.argsort(losses)
-            solutions = solutions[sorted_indices]  # En iyi çözümler başta
+            solutions = solutions[sorted_indices]
 
             best_loss = losses[sorted_indices[0]]
             avg_loss = np.mean(losses)
@@ -121,29 +136,32 @@ class Fitter:
 
             print(f"Iteration {current_iteration + 1}, Best loss: {best_loss}, Avg loss: {avg_loss:.2f}")
 
-            # Elitleri koru
+            # Copy best solutions to the new population
             new_solutions = solutions[:elite_count].copy()
 
-            # Yeni bireyler üret
+            # Generate new solutions
+            # Total solution count will not change
             while len(new_solutions) < population_size:
-                # Rastgele iki elit seç
+                # Select 2 random elite solutions
                 parents = solutions[np.random.choice(elite_count, size=2, replace=False)]
-                # Çaprazla (tek nokta)
+
+                # Apply crossover using single middle point
                 crossover_point = np.random.randint(1, Fitter.PATTERN_COUNT)
                 child = np.concatenate([
                     parents[0][:crossover_point],
                     parents[1][crossover_point:]
                 ], axis=0)
 
-                # Mutasyon uygula
+                # Apply mutation with small probability
                 mutation_mask = (np.random.rand(*child.shape) < mutation_rate).astype(int)
                 child = np.bitwise_xor(child, mutation_mask)
 
+                # Add the new child to the new population
                 new_solutions = np.concatenate([new_solutions, [child]], axis=0)
 
-            solutions = new_solutions[:population_size]  # Yeni nesil
+            solutions = new_solutions[:population_size]
 
-        # Grafik: Loss değerlerinin düşüşü
+        # Plot the change of loss values with respect to iterations
         pyplot.plot(best_losses, label='Best Loss')
         pyplot.xlabel("Iteration")
         pyplot.ylabel("Loss")
