@@ -37,7 +37,25 @@ class Fitter:
                                    current_image,
                                    x_index,
                                    y_index):
-        raise NotImplementedError
+        current_chunk = np.zeros((Fitter.PATTERN_X_SIZE,
+                                  Fitter.PATTERN_Y_SIZE))
+
+        for i in range(PATTERN_X_SIZE):
+            for j in range(PATTERN_Y_SIZE):
+                current_chunk[i][j] = current_image[
+                    x_index + i][y_index + j]
+        
+        maximum_similarity = -1
+        closest_pattern = -1
+        for (i, pattern) in enumerate(solution):
+            similarity = compare_patterns(pattern, current_chunk)
+            if similarity > maximum_similarity:
+                maximum_similarity = similarity
+                closest_pattern = i
+
+        for i in range(PATTERN_X_SIZE):
+            for j in range(PATTERN_Y_SIZE):
+                approximate_image[x_index + i][y_index + j] = //
 
     
     def construct_approximate_image(self, image_set_index,
