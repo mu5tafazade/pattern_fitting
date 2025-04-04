@@ -150,13 +150,13 @@ class Fitter:
 
     def run(self):
         images = self.load_images()
-        mutation_rates = [0.01, 0.05, 0.1, 0.2, 0.5]
-        solution_counts = [500, 1000, 1500, 2000, 2500]
+        mutation_rates = [0.01]
+        solution_counts = [500, 1000, 2000]
 
         for mut in mutation_rates:
             for sol_count in solution_counts:
                 print(f"\n>>> Mutation rate: {mut}, Solution count: {sol_count}")
-                self.fit_to_image_set(0, images, mutation_rate=mut, solution_count=sol_count)
+                self.fit_to_image_set(2, images, mutation_rate=mut, solution_count=sol_count)
 
 def main():
     Fitter().run()
